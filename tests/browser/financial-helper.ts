@@ -1,0 +1,12 @@
+import {Page,expect} from '@playwright/test';
+export async function financialWorkflow(page:Page){
+ async function row(title:string){const summary=page.locator('summary').filter({hasText:title}).first();const details=summary.locator('..');if(await details.getAttribute('open')===null)await summary.click();return details;}
+ async function step(title:string,button:string,due=false){const r=await row(title);await r.getByRole('button',{name:button,exact:true}).click();const d=page.getByRole('dialog');await d.getByLabel('审核、验收或整改说明').fill('财务已复核明细与依据');if(due)await d.getByLabel('应收到期日期').fill('2026-12-31');await d.getByRole('button',{name:'确认操作'}).click();await expect(d).toBeHidden();}
+ async function approve(title:string){await step(title,'提交审核');await step(title,'通过');}
+ await page.getByRole('button',{name:'新增服务 / 试剂订单',exact:true}).click();let d=page.getByRole('dialog');await d.getByLabel('名称',{exact:true}).fill('混合单位订单');
+ await d.getByLabel('服务/产品 1',{exact:true}).fill('测序');await d.getByLabel('单位 1',{exact:true}).selectOption('Lane');await d.getByLabel('数量 1',{exact:true}).fill('2');await d.getByLabel('单价（元） 1',{exact:true}).fill('4000');await d.getByRole('button',{name:'增加明细'}).click();
+ await d.getByLabel('服务/产品 2',{exact:true}).fill('试剂');await d.getByLabel('单位 2',{exact:true}).selectOption('套');await d.getByLabel('数量 2',{exact:true}).fill('2');await d.getByLabel('单价（元） 2',{exact:true}).fill('1000');await d.getByRole('button',{name:'保存草稿'}).click();await expect(d).toBeHidden();await approve('混合单位订单');
+ await page.getByRole('button',{name:'新增结算单',exact:true}).click();d=page.getByRole('dialog');await d.getByLabel('名称',{exact:true}).fill('月度结算');await d.getByRole('checkbox').check();await d.getByRole('button',{name:'保存草稿'}).click();await expect(d).toBeHidden();await approve('月度结算');
+ await page.getByRole('button',{name:'新增发票',exact:true}).click();d=page.getByRole('dialog');await d.getByLabel('名称',{exact:true}).fill('月度发票');await d.getByRole('combobox').selectOption({label:'月度结算'});await d.getByLabel('发票号码').fill('PW-SR-INVOICE');await d.getByLabel('开票金额（元）').fill('10000');await d.getByLabel('开票日期').fill('2026-09-30');await d.getByRole('button',{name:'保存草稿'}).click();await expect(d).toBeHidden();await approve('月度发票');
+ await step('月度结算','生成应收',true);await (await row('月度结算')).getByRole('button',{name:'查看应收与回款'}).click();await expect(page.getByRole('heading',{name:'结算应收：月度结算'})).toBeVisible();
+}

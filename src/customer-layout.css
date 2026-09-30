@@ -1,0 +1,15 @@
+.customer-grid{height:clamp(440px,calc(100dvh - 245px),850px);align-items:stretch;min-width:0}
+.customer-grid>.customer-list-panel{display:flex;flex-direction:column;padding:0;min-height:0;min-width:0;overflow:hidden}
+.customer-list-filters{flex:none;padding:16px;border-bottom:1px solid var(--line);background:#fff;border-radius:12px 12px 0 0}
+.customer-list-filters>input{width:100%;font-size:12px}
+.customer-selects{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+.customer-selects select{width:100%;min-width:0;padding:8px 5px;font-size:11px}
+.customer-list-count{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:12px;color:#8a96a5;font-size:11px}
+.customer-list-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding:8px;touch-action:pan-y}
+.customer-list-scroll .customer-row{overflow-wrap:anywhere}
+.customer-grid>.customer-detail-panel{display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden}
+.customer-detail-panel>.panel-head,.customer-detail-panel>.action-bar,.customer-detail-panel>h3{flex-shrink:0}
+.customer-detail-panel h2{overflow-wrap:anywhere}
+.customer-timeline{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.customer-list-scroll:focus-visible,.customer-timeline:focus-visible{outline:2px solid #6576ed;outline-offset:-2px}
+@media(max-width:700px){.customer-grid{height:auto}.customer-grid>.customer-list-panel:first-child{height:clamp(320px,45dvh,430px);max-height:none;overflow:hidden}.customer-grid>.customer-detail-panel{height:450px}.customer-selects select{font-size:12px}}

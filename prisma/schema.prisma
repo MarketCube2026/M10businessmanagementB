@@ -1,0 +1,234 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "sqlite"
+  url = env("DATABASE_URL")
+}
+model User {
+  id String @id @default(cuid())
+  username String @unique
+  name String
+  role String
+  passwordHash String
+  sessions Session[]
+  customers Customer[]
+  records Record[]
+  grants Grant[]
+}
+model Session {
+  id String @id
+  userId String
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  expiresAt DateTime
+}
+model Customer {
+  id String @id @default(cuid())
+  name String @unique
+  ownerId String
+  owner User @relation(fields:[ownerId],references:[id])
+  contact String @default("")
+  source String @default("manual")
+  version Int @default(1)
+  archived Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cases BusinessCase[]
+  grants Grant[]
+}
+model Grant {
+  id String @id @default(cuid())
+  userId String
+  customerId String
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  customer Customer @relation(fields:[customerId],references:[id],onDelete:Cascade)
+  @@unique([userId,customerId])
+}
+model BusinessCase {
+  id String @id @default(cuid())
+  customerId String
+  customer Customer @relation(fields:[customerId],references:[id])
+  title String
+  nature String @default("daily")
+  businessLine String @default("PB")
+  protocol String?
+  createdAt DateTime @default(now())
+  records Record[]
+  scenarios Scenario[]
+}
+// Typed domain documents share versioning, ownership and a case FK.
+// Kind-specific JSON is validated by shared schemas and domain services.
+model Record {
+  id String @id @default(cuid())
+  kind String
+  nature String @default("daily")
+  businessLine String @default("PB")
+  title String
+  caseId String?
+  case BusinessCase? @relation(fields:[caseId],references:[id])
+  parentId String?
+  parent Record? @relation("Children",fields:[parentId],references:[id])
+  children Record[] @relation("Children")
+  ownerId String
+  owner User @relation(fields:[ownerId],references:[id])
+  status String @default("draft")
+  lastFollowUpAt DateTime?
+  data String @default("{}")
+  version Int @default(1)
+  archived Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  revisions Revision[]
+  files Attachment[]
+  tasks AiTask[]
+  workflowItems WorkflowItem[]
+  sourceRows SourceRow[]
+  @@index([kind,caseId])
+}
+model Revision {
+  id String @id @default(cuid())
+  recordId String
+  record Record @relation(fields:[recordId],references:[id])
+  version Int
+  snapshot String
+  actorId String
+  action String
+  comment String
+  createdAt DateTime @default(now())
+  @@unique([recordId,version])
+}
+model Attachment {
+  id String @id @default(cuid())
+  recordId String
+  record Record @relation(fields:[recordId],references:[id])
+  name String
+  mime String
+  path String
+  size Int
+  text String
+  parseStatus String
+  createdAt DateTime @default(now())
+}
+model AiTask {
+  id String @id @default(cuid())
+  recordId String
+  record Record @relation(fields:[recordId],references:[id])
+  tool String
+  input String
+  output String @default("")
+  status String @default("queued")
+  error String @default("")
+  attempts Int @default(0)
+  source String @default("demo-template")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model AuditLog {
+  id String @id @default(cuid())
+  actorId String
+  entityId String
+  action String
+  detail String
+  createdAt DateTime @default(now())
+}
+model SourceDocument {
+  id String @id @default(cuid())
+  hash String @unique
+  name String
+  path String
+  businessLine String
+  sourceDate String?
+  content String
+  createdAt DateTime @default(now())
+  rows SourceRow[]
+}
+model ImportBatch {
+  id String @id @default(cuid())
+  title String
+  status String @default("preview")
+  manifest String @default("{}")
+  createdAt DateTime @default(now())
+  rows SourceRow[]
+}
+model SourceRow {
+  id String @id @default(cuid())
+  sourceId String
+  source SourceDocument @relation(fields:[sourceId],references:[id])
+  batchId String
+  batch ImportBatch @relation(fields:[batchId],references:[id])
+  locator String
+  page Int
+  category String
+  raw String
+  normalized String
+  evidence String @default("fact")
+  issues String @default("")
+  recordId String?
+  record Record? @relation(fields:[recordId],references:[id],onDelete:SetNull)
+  @@unique([sourceId,locator])
+}
+model WorkflowItem {
+  id String @id @default(cuid())
+  kind String
+  title String
+  recordId String
+  record Record @relation(fields:[recordId],references:[id])
+  status String @default("draft")
+  version Int @default(1)
+  data String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model Scenario {
+  id String @id @default(cuid())
+  code String @unique
+  title String
+  caseId String?
+  case BusinessCase? @relation(fields:[caseId],references:[id])
+  status String @default("ready")
+  steps String @default("[]")
+  updatedAt DateTime @updatedAt
+}
+model CalendarDay {
+  date String @id
+  working Boolean
+  note String
+}
+model ManagementSetting {
+  id String @id @default("company")
+  stagnantDays Int @default(14)
+}
+model RiskHandling {
+  id String @id @default(cuid())
+  riskKey String
+  recordId String
+  actorId String
+  assigneeId String
+  dueDate String
+  note String
+  createdAt DateTime @default(now())
+}
+model WeeklyReport {
+  id String @id @default(cuid())
+  ownerId String
+  title String
+  filters String
+  content String
+  version Int @default(1)
+  createdAt DateTime @default(now())
+}
+model RandomRun {
+  id String @id @default(cuid())
+  batch String
+  seed Int
+  index Int
+  type String
+  target String
+  caseId String?
+  status String @default("ready")
+  steps String @default("[]")
+  error String @default("")
+  durationMs Int @default(0)
+  createdAt DateTime @default(now())
+  @@unique([batch,index])
+}
